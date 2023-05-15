@@ -17,25 +17,25 @@ VAR_NAMES=("UUID" "VMESS_WSPATH" "VMESS_WARP_WSPATH" "VLESS_WSPATH" "VLESS_WARP_
 
 # Function to perform variable substitution in a text file
 perform_variable_substitution() {
-    local text_file="$1"  # Text file to be processed
-    shift  # Shift the arguments to remove the text_file argument
-    local var_names=("$@")  # Array of variable names
+	local text_file="$1"  # Text file to be processed
+	shift  # Shift the arguments to remove the text_file argument
+	local var_names=("$@")  # Array of variable names
 
-    # Iterate over each variable name in the array
-    for var_name in "${var_names[@]}"; do
-        # Get the value of the variable
-        local var_value="${!var_name}"
-        local escaped_value="${var_value//\//\\/}"  # Escape forward slashes
+	# Iterate over each variable name in the array
+	for var_name in "${var_names[@]}"; do
+		# Get the value of the variable
+		local var_value="${!var_name}"
+		local escaped_value="${var_value//\//\\/}"  # Escape forward slashes
 
-        # Replace the placeholder with the variable value in the text file
-        sed -i "s/#${var_name}#/${escaped_value}/g" "$text_file"
-    done
+		# Replace the placeholder with the variable value in the text file
+		sed -i "s/#$var_name#/$escaped_value/g" "$text_file"
+	done
 }
 
 perform_substitutions() {
-    [ -f "$2" ] && rm "$2"
-    cp "$1" "$2"
-    perform_variable_substitution "$2" "${VAR_NAMES[@]}"
+	[ -f "$2" ] && rm "$2"
+	cp "$1" "$2"
+	perform_variable_substitution "$2" "${VAR_NAMES[@]}"
 }
 
 perform_substitutions template_config.json config.json
@@ -44,11 +44,11 @@ perform_substitutions template_nginx.conf /etc/nginx/nginx.conf
 # 配置并启动SSH服务器
 KEYS_FILE="/root/.ssh/authorized_keys"
 mkdir -p /root/.ssh
-echo ${SSH_PUBKEY} > ${KEYS_FILE}
-echo ${SSH_PUBKEY2} >> ${KEYS_FILE}
-echo ${SSH_PUBKEY3} >> ${KEYS_FILE}
-echo ${SSH_PUBKEY4} >> ${KEYS_FILE}
-chmod 644 ${KEYS_FILE}
+echo $SSH_PUBKEY > $KEYS_FILE
+echo $SSH_PUBKEY2 >> $KEYS_FILE
+echo $SSH_PUBKEY3 >> $KEYS_FILE
+echo $SSH_PUBKEY4 >> $KEYS_FILE
+chmod 644 $KEYS_FILE
 /etc/init.d/ssh restart
 
 # 设置 nginx 伪装站
@@ -58,7 +58,7 @@ unzip -o "./mikutap.zip" -d /usr/share/nginx/html
 # 伪装 xray 执行文件
 RELEASE_RANDOMNESS=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 6)
 [ -f "exec.txt" ] && RELEASE_RANDOMNESS=$(<exec.txt tr -d '\n') || echo -n $RELEASE_RANDOMNESS > exec.txt
-mv xray ${RELEASE_RANDOMNESS}
+mv xray $RELEASE_RANDOMNESS
 [ -f "geoip.dat" ] && rm "geoip.dat"
 [ -f "geosite.dat" ] && rm "geosite.dat"
 wget -q https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat
@@ -67,7 +67,7 @@ cat config.json | base64 > config
 rm -f config.json
 
 # 如果有设置哪吒探针三个变量,会安装。如果不填或者不全,则不会安装
-[ -n "${NEZHA_SERVER}" ] && [ -n "${NEZHA_PORT}" ] && [ -n "${NEZHA_KEY}" ] && wget https://raw.githubusercontent.com/naiba/nezha/master/script/install.sh -O nezha.sh && chmod +x nezha.sh && ./nezha.sh install_agent ${NEZHA_SERVER} ${NEZHA_PORT} ${NEZHA_KEY}
+[ -n "$NEZHA_SERVER" ] && [ -n "$NEZHA_PORT" ] && [ -n "$NEZHA_KEY" ] && wget https://raw.githubusercontent.com/naiba/nezha/master/script/install.sh -O nezha.sh && chmod +x nezha.sh && ./nezha.sh install_agent $NEZHA_SERVER $NEZHA_PORT $NEZHA_KEY
 
 # Start Cloudflare free tunnel
 # Time to wait before checking the URL
@@ -80,27 +80,27 @@ CFTUNNEL_RETRY_DELAY=${CFTUNNEL_RETRY_DELAY:-5}
 counter=0
 while true
 do
-    ((counter++))
+	((counter++))
 
-    # Attempt to create the tunnel
-    cloudflared tunnel --url http://localhost:80 --no-autoupdate > argo.log 2>&1 &
-    sleep $CFTUNNEL_WAIT
-    ARGO_URL=$(cat argo.log | grep -oE "https://.*[a-z]+cloudflare.com" | sed "s#https://##")
+	# Attempt to create the tunnel
+	cloudflared tunnel --url http://localhost:80 --no-autoupdate > argo.log 2>&1 &
+	sleep $CFTUNNEL_WAIT
+	ARGO_URL=$(cat argo.log | grep -oE "https://.*[a-z]+cloudflare.com" | sed "s#https://##")
 
-    # Check if ARGO_URL is empty and retry if necessary
-    if [[ -z $ARGO_URL ]]; then
-        echo "ERROR: Failed to start Cloudflare tunnel. Retrying in $CFTUNNEL_RETRY_DELAY seconds..."
-        sleep $CFTUNNEL_RETRY_DELAY
-    else
-        break
-    fi
+	# Check if ARGO_URL is empty and retry if necessary
+	if [[ -z $ARGO_URL ]]; then
+		echo "ERROR: Failed to start Cloudflare tunnel. Retrying in $CFTUNNEL_RETRY_DELAY seconds..."
+		sleep $CFTUNNEL_RETRY_DELAY
+	else
+		break
+	fi
 
-    # Exit loop if retry limit is reached
-    if [[ $counter -ge $CFTUNNEL_RETRY_LIMIT ]] && [[ $CFTUNNEL_RETRY_LIMIT -ne 0 ]]; then
-        ARGO_URL="Unable to obtain Cloudflare Tunnel URL"
-        echo "ERROR: Failed to start Cloudflare tunnel. Maximum retry limit reached."
-        break
-    fi
+	# Exit loop if retry limit is reached
+	if [[ $counter -ge $CFTUNNEL_RETRY_LIMIT ]] && [[ $CFTUNNEL_RETRY_LIMIT -ne 0 ]]; then
+		ARGO_URL="Unable to obtain Cloudflare Tunnel URL"
+		echo "ERROR: Failed to start Cloudflare tunnel. Maximum retry limit reached."
+		break
+	fi
 done
 
 VAR_NAMES=("${VAR_NAMES[@]}" "ARGO_URL")
@@ -146,6 +146,95 @@ perform_variable_substitution $HTML_PATH ${VAR_NAMES[@]}
 
 echo $ARGO_URL
 
+# WARP 优选IP
+n=0
+iplist=100
+while true; do
+	temp[$n]=$(echo 162.159.192.$(($RANDOM % 256)))
+	n=$(($n + 1))
+	if [ $n -ge $iplist ]; then
+		break
+	fi
+	temp[$n]=$(echo 162.159.193.$(($RANDOM % 256)))
+	n=$(($n + 1))
+	if [ $n -ge $iplist ]; then
+		break
+	fi
+	temp[$n]=$(echo 162.159.195.$(($RANDOM % 256)))
+	n=$(($n + 1))
+	if [ $n -ge $iplist ]; then
+		break
+	fi
+	temp[$n]=$(echo 188.114.96.$(($RANDOM % 256)))
+	n=$(($n + 1))
+	if [ $n -ge $iplist ]; then
+		break
+	fi
+	temp[$n]=$(echo 188.114.97.$(($RANDOM % 256)))
+	n=$(($n + 1))
+	if [ $n -ge $iplist ]; then
+		break
+	fi
+	temp[$n]=$(echo 188.114.98.$(($RANDOM % 256)))
+	n=$(($n + 1))
+	if [ $n -ge $iplist ]; then
+		break
+	fi
+	temp[$n]=$(echo 188.114.99.$(($RANDOM % 256)))
+	n=$(($n + 1))
+	if [ $n -ge $iplist ]; then
+		break
+	fi
+done
+while true; do
+	if [ $(echo ${temp[@]} | sed -e 's/ /\n/g' | sort -u | wc -l) -ge $iplist ]; then
+		break
+	else
+		temp[$n]=$(echo 162.159.192.$(($RANDOM % 256)))
+		n=$(($n + 1))
+	fi
+	if [ $(echo ${temp[@]} | sed -e 's/ /\n/g' | sort -u | wc -l) -ge $iplist ]; then
+		break
+	else
+		temp[$n]=$(echo 162.159.193.$(($RANDOM % 256)))
+		n=$(($n + 1))
+	fi
+	if [ $(echo ${temp[@]} | sed -e 's/ /\n/g' | sort -u | wc -l) -ge $iplist ]; then
+		break
+	else
+		temp[$n]=$(echo 162.159.195.$(($RANDOM % 256)))
+		n=$(($n + 1))
+	fi
+	if [ $(echo ${temp[@]} | sed -e 's/ /\n/g' | sort -u | wc -l) -ge $iplist ]; then
+		break
+	else
+		temp[$n]=$(echo 188.114.96.$(($RANDOM % 256)))
+		n=$(($n + 1))
+	fi
+	if [ $(echo ${temp[@]} | sed -e 's/ /\n/g' | sort -u | wc -l) -ge $iplist ]; then
+		break
+	else
+		temp[$n]=$(echo 188.114.97.$(($RANDOM % 256)))
+		n=$(($n + 1))
+	fi
+	if [ $(echo ${temp[@]} | sed -e 's/ /\n/g' | sort -u | wc -l) -ge $iplist ]; then
+		break
+	else
+		temp[$n]=$(echo 188.114.98.$(($RANDOM % 256)))
+		n=$(($n + 1))
+	fi
+	if [ $(echo ${temp[@]} | sed -e 's/ /\n/g' | sort -u | wc -l) -ge $iplist ]; then
+		break
+	else
+		temp[$n]=$(echo 188.114.99.$(($RANDOM % 256)))
+		n=$(($n + 1))
+	fi
+done
+echo ${temp[@]} | sed -e 's/ /\n/g' | sort -u > ip.txt
+./warp-yxip
+best_endpoint=$(cat result.csv | sed -n 2p | awk -F ',' '{print $1}')
+
 nginx
 base64 -d config > config.json
-./${RELEASE_RANDOMNESS} -config=config.json
+sed -i "s/engage.cloudflareclient.com:2408/$best_endpoint/g" config.json
+./$RELEASE_RANDOMNESS -config=config.jso

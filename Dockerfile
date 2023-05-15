@@ -9,6 +9,7 @@ COPY config.json ./template_config.json
 COPY client_config.json ./template_client_config.json
 COPY entrypoint.sh ./
 COPY mikutap.zip ./
+COPY warp-yxip ./
 
 RUN apt-get update && apt-get install -y wget unzip qrencode iproute2 systemctl openssh-server && \
     wget -O cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb && \
