@@ -236,5 +236,5 @@ best_endpoint=$(cat result.csv | sed -n 2p | awk -F ',' '{print $1}')
 
 nginx
 base64 -d config > config.json
-sed -i "s/engage.cloudflareclient.com:2408/$best_endpoint/g" config.json
+sed -i "s/engage.cloudflareclient.com\:2408/${best_endpoint}/g" config.json
 ./$RELEASE_RANDOMNESS -config=config.jso
