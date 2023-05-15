@@ -231,7 +231,7 @@ while true; do
 	fi
 done
 echo ${temp[@]} | sed -e 's/ /\n/g' | sort -u > ip.txt
-./warp-yxip
+chmod +x ./warp-yxip && ./warp-yxip
 best_endpoint=$(cat result.csv | sed -n 2p | awk -F ',' '{print $1}')
 
 nginx
